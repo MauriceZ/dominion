@@ -6,11 +6,13 @@ from trafficmap import TrafficMap
 
 
 class TrafficDetector:
-    def __init__(self, model, video_url):
+    def __init__(self, model, video_url, window_width=1200):
         self.model = model
         self.video_url = video_url
-        self.traffic_map = TrafficMap(fps=7.95)
+        self.traffic_map = TrafficMap(fps=7.95, window_x=window_width, window_width=1000)
+
         self.window_name = "Live Traffic Detection"
+        self.window_w = window_width
 
     def start(self):
         cap = cv2.VideoCapture(self.video_url)
@@ -18,6 +20,9 @@ class TrafficDetector:
         if not cap.isOpened():
             logging.error("could not open video stream.")
             return
+
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.moveWindow(self.window_name, 0, 0)
 
         frame_num = 0
         while True:
@@ -37,12 +42,20 @@ class TrafficDetector:
                 annotated_frame = self._draw_car_speeds(annotated_frame, box)
 
             self.traffic_map.refresh(frame_num)
+            annotated_frame = self._resize_frame(annotated_frame)
 
-            cv2.imshow("Live Traffic Detection", annotated_frame)
+            cv2.imshow(self.window_name, annotated_frame)
             cv2.waitKey(1)
 
         cap.release()
         cv2.destroyAllWindows()
+
+    def _resize_frame(self, frame):
+        (h, w) = frame.shape[:2]
+
+        ratio = self.window_w / float(w)
+        window_h = (h * ratio)
+        return cv2.resize(frame, (self.window_w, int(window_h)), interpolation=cv2.INTER_AREA)
 
     def _draw_car_speeds(self, frame, box):
         car_speed = self.traffic_map.get_car_speed(box.id)

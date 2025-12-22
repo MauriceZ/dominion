@@ -72,7 +72,7 @@ class Car:
 
 
 class TrafficMap:
-    def __init__(self, fps):
+    def __init__(self, fps, window_x=0, window_width=500):
         self.fps = fps
 
         # The map bounds in web mercator
@@ -88,6 +88,12 @@ class TrafficMap:
         w = 400
 
         self.histogram = Histogram(pos=(hist_x - w, hist_y), width=w, unit_height=3)
+
+        self.window_name = "Traffic 2D Map"
+        cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
+        cv2.moveWindow(self.window_name, window_x, 0)
+
+        self.window_w = window_width
 
         self.cars = {}
 
@@ -168,10 +174,20 @@ class TrafficMap:
         u, v = self.meters_to_image_pixels(self.x_min, self.y_max)
         self.histogram.render(img, self.cars)
 
-        cv2.imshow("Traffic 2D Map", img)
+        img = self._resize_frame(img)
+
+        cv2.imshow(self.window_name, img)
 
         for car_id in to_del:
             del self.cars[car_id]
+
+
+    def _resize_frame(self, frame):
+        (h, w) = frame.shape[:2]
+
+        ratio = self.window_w / float(w)
+        window_h = (h * ratio)
+        return cv2.resize(frame, (self.window_w, int(window_h)), interpolation=cv2.INTER_AREA)
 
 
 class Histogram:
