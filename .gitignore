@@ -10,3 +10,6 @@ wheels/
 .venv
 
 videos/
+application.pdf
+.idea/
+.DS_Store
