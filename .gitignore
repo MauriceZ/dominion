@@ -9,7 +9,6 @@ wheels/
 # Virtual environments
 .venv
 
-videos/
 application.pdf
 .idea/
 .DS_Store
