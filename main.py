@@ -1,4 +1,5 @@
 from ultralytics import YOLO
+
 from trafficdetection import TrafficDetector
 
 
