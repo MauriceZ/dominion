@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-FILE_PATH = "/Users/maurice/Downloads/road_iowa.png.points.csv"
+FILE_PATH = "road_iowa.png.points.csv"
 
 data = np.loadtxt(FILE_PATH, delimiter=",", skiprows=1)
 
