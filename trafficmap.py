@@ -12,6 +12,23 @@ H_MATRIX = np.array([
     [-1.42749785e-02, 2.95577907e-01, 1.00000000e+00],
 ])
 
+CLASS_LABELS = {
+    0: 'Pickup',
+    1: 'Sedan',
+    2: 'SUV',
+    3: 'Truck',
+    4: 'Van',
+}
+
+CLASS_COLORS_BGR = {
+    0: (245, 41, 16),
+    1: (232, 216, 100),
+    2: (243, 243, 243),
+    3: (100, 31, 20),
+    4: (178, 212, 97),
+}
+
+
 class Car:
     def __init__(self, car_id, x, y, cls, frame_num, fps):
         self.fps = fps
@@ -51,19 +68,7 @@ class Car:
     def get_line_color(cls):
         if not isinstance(cls, int):
             cls = cls.int()[0].item()
-
-        if cls == 0:
-            return (0, 255, 0)
-        elif cls == 1:
-            return (255, 255, 0)
-        elif cls == 2:
-            return (255, 0, 0)
-        elif cls == 3:
-            return (255, 0, 255)
-        elif cls == 4:
-            return (0, 0, 255)
-
-        return (255, 255, 255)
+        return CLASS_COLORS_BGR[cls]
 
 
 class TrafficMap:
@@ -78,6 +83,11 @@ class TrafficMap:
 
         self.img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
         self.h_px, self.w_px = self.img_bgr.shape[:2]
+
+        hist_x, hist_y = self.meters_to_image_pixels(self.x_max, self.y_min)
+        w = 400
+
+        self.histogram = Histogram(pos=(hist_x - w, hist_y), width=w, unit_height=3)
 
         self.cars = {}
 
@@ -155,7 +165,52 @@ class TrafficMap:
                     last_u, last_v = self.meters_to_image_pixels(last_x, last_y)
                     cv2.line(img, (last_u, last_v), (u, v), car.get_line_color(last_cls), thickness=2, lineType=16)
 
-        cv2.imshow("Traffic Map", img)
+        u, v = self.meters_to_image_pixels(self.x_min, self.y_max)
+        self.histogram.render(img, self.cars)
+
+        cv2.imshow("Traffic 2D Map", img)
 
         for car_id in to_del:
             del self.cars[car_id]
+
+
+class Histogram:
+    def __init__(self, pos, width, unit_height):
+        self.pos = pos # bottom left of histogram
+        self.width = width
+        self.unit_height = unit_height
+
+    def render(self, img, cars):
+        x_start, y_start = self.pos
+
+        counts = {}
+
+        for car in cars.values():
+            car_cls = car.positions[-1][2]
+            cls_count = counts.get(car_cls, 0) + 1
+            counts[car_cls] = cls_count
+
+        bar_w = self.width // len(CLASS_LABELS.keys())
+
+        label_height = 20
+
+        for i, cls in enumerate(sorted(CLASS_LABELS.keys())):
+            count = counts.get(cls, 0)
+
+            bar_x = x_start + bar_w * i
+            bar_y = y_start - label_height - (count * self.unit_height)
+
+            cv2.rectangle(img, (bar_x, bar_y), (x_start + bar_w * (i + 1), y_start - label_height), CLASS_COLORS_BGR[cls], -1)
+
+            # Calculate margin to center the label text under the bar
+            label = f"{CLASS_LABELS[cls]}s"
+            (label_w, _), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            label_margin = (bar_w - label_w) // 2
+            cv2.putText(img, f"{CLASS_LABELS[cls]}s", (bar_x + label_margin, y_start - 3),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+
+            # Calculate margin to center the count text over the bar
+            (count_text_w, _), _ = cv2.getTextSize(str(count), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+            text_margin = (bar_w - count_text_w) // 2
+            cv2.putText(img, str(count), (bar_x + text_margin, bar_y - 3),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)

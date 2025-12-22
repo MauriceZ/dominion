@@ -10,6 +10,7 @@ class TrafficDetector:
         self.model = model
         self.video_url = video_url
         self.traffic_map = TrafficMap(fps=7.95)
+        self.window_name = "Live Traffic Detection"
 
     def start(self):
         cap = cv2.VideoCapture(self.video_url)
