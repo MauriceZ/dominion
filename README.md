@@ -77,4 +77,4 @@ loom video link: https://www.loom.com/share/6a47a207b2364e1b9d20904b730734f7
 ## Improvements
 
 The main things I would do to improve my system would be to train the model with more data, and compute a more accurate homography projection. 
-I intentionally decided to timebox these activities as I thought those manual tasks are not as interesting in the context of take home interview, even though they are extremely important to the accuracy of the system.
+I intentionally decided to timebox these activities as I thought those manual tasks are not as interesting in the context of a take home interview, even though they are extremely important to the accuracy of the system.
